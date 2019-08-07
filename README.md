@@ -2,17 +2,17 @@
 
 This program allow you posting xkcd comics in VK automatically!
 
-Now yod dont need lose you time and you can just reading comics!
+Now you dont need lose you time and you can just reading comics!
 
 ### How to install
 
-You need to create `.env` file and write in file parameter `VK_APP_TOKEN` and `GROUP_ID`.
+You need to create `.env` file and write in file parameters `VK_APP_TOKEN` and `GROUP_ID`.
 
 `GROUP_ID` - id of your VK group, you can get your group id [on this website](http://regvk.com/id/)
 
 `VK_APP_TOKEN` - secret token of you VK app. If you need this token you need:
 
-1) [Create standalone VK APP](https://vk.com/apps?act=manage) - `Create app` button.
+1) [Create standalone VK APP](https://vk.com/apps?act=manage) - push `Create app` button.
 2) Get your APP ID - start edit your app anf read APP ID in address bar
 3) [Get token](https://vk.com/dev/implicit_flow_user) - you need add `photos`, `groups`, `wall` and `offline` in `scope` param. Also set `response_type=token`
 

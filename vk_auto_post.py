@@ -3,6 +3,8 @@ import os
 
 import requests
 
+import common_functions as cf
+
 
 class VKAutoPost:
     """Poster photos in VK.
@@ -19,21 +21,16 @@ class VKAutoPost:
 
     :param token: str, your app token which you must got with help of instruction https://vk.com/dev/implicit_flow_user
     :param group_id: str or int, id of your VK group
-    :param api_version: str, version of VK API, need in every VK API methon
-    :param logger: object of logger
-    :param logger_handler: str, type of logger handlong
+    :param api_version: str, version of VK API, need in every VK API method
     """
 
-    def __init__(self, token, group_id, api_version, logger=None):
+    def __init__(self, token, group_id, api_version):
         self.token = token
         self.group_id = group_id
         self.api_version = api_version
         self.logger = logger
 
-        if logger is None:
-            self.logger = logging.getLogger('VK autopost self log')
-            handler = logging.NullHandler()
-            self.logger.addHandler(handler)
+        self.logger = logging.getLogger(__name__)
 
         # urls of using methods of API
         self.server_upload_url = 'https://api.vk.com/method/photos.getWallUploadServer'
@@ -51,13 +48,7 @@ class VKAutoPost:
         }
         self.logger.debug('Getting server url for upload')
         response = requests.get(self.server_upload_url, params)
-
-        # check HTTPError
-        response.raise_for_status()
-        # some sites can return 200 and write error in body
-        if 'error' in response:
-            self.logger.error(f'Error in response body. Url: {self.server_upload_url}')
-            raise requests.exceptions.HTTPError(response['error'])
+        cf.raise_response_errors(response)
 
         self.upload_server_url = response.json()['response']['upload_url']
 
@@ -78,13 +69,7 @@ class VKAutoPost:
         # upload image on server
         files = {'photo': image_file_descriptor}
         response = requests.post(self.upload_server_url, files=files)
-
-        # check HTTPError
-        response.raise_for_status()
-        # some sites can return 200 and write error in body
-        if 'error' in response:
-            self.logger.error(f'Error in response body. Url: {self.upload_server_url}')
-            raise requests.exceptions.HTTPError(response['error'])
+        cf.raise_response_errors(response)
 
         self.logger.info('Image was uploaded on server')
         image_file_descriptor.close()
@@ -107,13 +92,7 @@ class VKAutoPost:
         }
         self.logger.debug('Start saving photo in group photoalbum')
         response = requests.post(self.save_photo_in_group_album_url, params)
-
-        # check HTTPError
-        response.raise_for_status()
-        # some sites can return 200 and write error in body
-        if 'error' in response:
-            self.logger.error(f'Error in response body. Url: {self.save_photo_in_group_album_url}')
-            raise requests.exceptions.HTTPError(response['error'])
+        cf.raise_response_errors(response)
 
         # parameters for posting photo on wall method
         self.attachments_owner_id = response.json()['response'][0]['owner_id']
@@ -148,11 +127,6 @@ class VKAutoPost:
         }
 
         response = requests.post(self.wall_post_url, params)
-        # check HTTPError
-        response.raise_for_status()
-        # some sites can return 200 and write error in body
-        if 'error' in response:
-            self.logger.error(f'Error in response body. Url: {self.wall_post_url}')
-            raise requests.exceptions.HTTPError(response['error'])
+        cf.raise_response_errors(response)
 
         self.logger.info('Photo was posted on wall')

@@ -1,15 +1,13 @@
+import argparse
+import logging
 import os
 import random
-import logging
-import argparse
 
 import dotenv
 import requests
 
 import common_functions as cf
-from vk_photo_post import VKAutoPost
-
-logging.basicConfig(format='%(asctime)s  %(name)s  %(levelname)s  %(message)s', level=logging.INFO)
+from vk_auto_post import VKAutoPost
 
 
 def get_xkcd_comic_meta():
@@ -21,39 +19,30 @@ def get_xkcd_comic_meta():
 
     url = f'http://xkcd.com/{comic_id}/info.0.json'
     response = requests.get(url)
-
-    # check HTTPError
-    response.raise_for_status()
-    # some sites can return 200 and write error in body
-    if 'error' in response:
-        logging.error(f'Error in response body. Url: {url}')
-        raise requests.exceptions.HTTPError(response['error'])
+    cf.raise_response_errors(response)
 
     comic_meta = response.json()
 
     return comic_meta
 
 
-if __name__ == '__main__':
+def main():
     doc = '''
-          This program allow you posting xkcd comics in VK automatically!
-          Usage: python make_xkcd_image_post.py [from_group] [api_version]
-          '''
+              This program allow you posting xkcd comics in VK automatically!
+              Usage: python make_xkcd_image_post.py [from_group] [api_version]
+              '''
+
+    logging.basicConfig(format='%(asctime)s  %(name)s  %(levelname)s  %(message)s', level=logging.INFO)
 
     parser = argparse.ArgumentParser(description=doc, formatter_class=argparse.RawTextHelpFormatter)
     # optional args
     parser.add_argument('--from_group', action='store_true',
-                        help='True if author of post is group else False. Default True (optional)')
-    parser.add_argument('--vk_api_version', help='Version of VK API. Default "5.101" (optional)')
+                        help='True if author of post is group else False. Default True (optional)', default=True)
+    parser.add_argument('--vk_api_version', help='Version of VK API. Default "5.101" (optional)', default='5.101')
     args = parser.parse_args()
 
     logging.debug('Start posting on group wall random xkcd comic with description')
-    VK_API_VERSION = '5.101'
-    if args.vk_api_version is not None:
-        VK_API_VERSION = args.vk_api_version
-    FROM_GROUP = '1'
-    if (args.from_group is not None) and (not args.from_group):
-        FROM_GROUP = '0'
+    FROM_GROUP = str(int(args.from_group))
     logging.debug('In params parsed')
 
     vk_poster_logger = logging.getLogger('vk_poster')
@@ -75,8 +64,12 @@ if __name__ == '__main__':
     logging.debug('Loaded comic image in local')
 
     logging.debug('Starting post photo')
-    vk_poster = VKAutoPost(VK_APP_TOKEN, GROUP_ID, VK_API_VERSION, vk_poster_logger)
+    vk_poster = VKAutoPost(VK_APP_TOKEN, GROUP_ID, args.vk_api_version)
 
     vk_poster.post_img_on_wall(comic_meta['alt'], FROM_GROUP, img_name)
 
     logging.debug('Ending posting on group wall random xkcd comic with description')
+
+
+if __name__ == '__main__':
+    main()
